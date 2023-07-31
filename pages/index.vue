@@ -17,6 +17,7 @@ const [
   useFetchData('/girl-comics'),
 ]);
 
+
 useSeoMeta(meta());
 useServerSeoMeta(meta());
 </script>

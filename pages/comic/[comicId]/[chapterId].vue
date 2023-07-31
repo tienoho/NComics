@@ -164,7 +164,7 @@ useServerSeoMeta(
         v-else
         v-for="image in images"
         :key="image.src"
-        :src="image.src"
+        :src="image.src.replace(/comics-api.vercel.app/, 'comics-api-lxt8.onrender.com')"
         :alt="`Page ${image.page}`"
         loading="lazy"
         :id="image.page"
