@@ -124,11 +124,19 @@ const handleClickCard = (e: Event, type: 'detail' | 'delete' | 'continue') => {
             </span>
             <span class="flex items-center gap-1 bg-white/25 px-1 rounded">
               <Icon name="ant-design:heart-outlined" />
-              {{ followers }}
+              {{
+                Intl.NumberFormat('en', { notation: 'compact' }).format(
+                  +followers.replace(/,/g, '')
+                )
+              }}
             </span>
             <span class="flex items-center gap-1 bg-white/25 px-1 rounded">
               <Icon name="mingcute:comment-fill" />
-              {{ total_comments }}
+              {{
+                Intl.NumberFormat('en', { notation: 'compact' }).format(
+                  +total_comments.replace(/,/g, '')
+                )
+              }}
             </span>
           </div>
           <div v-else class="text-gray-300">

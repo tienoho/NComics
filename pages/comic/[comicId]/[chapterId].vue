@@ -155,7 +155,7 @@ useServerSeoMeta(
     <div class="flex flex-col max-w-2xl mx-auto">
       <span
         v-if="isChangingEpisode"
-        v-for="(_, idx) in new Array(20)"
+        v-for="(_, idx) in new Array(5)"
         :key="idx"
         class="aspect-[2/3] bg-zinc-700 animate-pulse"
       >
@@ -164,7 +164,7 @@ useServerSeoMeta(
         v-else
         v-for="image in images"
         :key="image.src"
-        :src="image.src.replace(/comics-api.vercel.app/, 'comics-api-lxt8.onrender.com')"
+        :src="image.src"
         :alt="`Page ${image.page}`"
         loading="lazy"
         :id="image.page"

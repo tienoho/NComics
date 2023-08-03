@@ -2,10 +2,10 @@ export const useFetchData = async (path: string): Promise<any> => {
   try {
     const config = useRuntimeConfig();
     const baseURL = config.public.baseURL as string;
-    const { data } = await useFetch(`/api/${path}`, {
+    const { data } = await useFetch(`${path}`, {
       method: 'GET',
       cache: 'default',
-      baseURL
+      baseURL,
     });
     return data.value;
   } catch (err) {
