@@ -1,23 +1,19 @@
 <script lang="ts" setup>
-import { ComicComments, ComicDetail, Comment } from '@/types';
+import { ComicDetail } from '@/types';
 import { meta } from '@/utils/data';
 
 type Chapter = {
   name: string;
   id: number;
 };
-type Tab = 'chapters' | 'comments';
 
 const route = useRoute();
 const comicId = route.params.comicId as string;
 const CHAPTER_PER_PAGE = 50;
 
 const chaptersSection = ref<Chapter[]>([]);
-const currentTab = ref<Tab>('chapters');
-const comments = ref<Comment[]>([]);
 const description = ref<any>(null);
 
-const commentPage = ref<number>(1);
 const currentChapterPage = ref<number>(0);
 const isEnd = ref<boolean>(false);
 
@@ -31,22 +27,7 @@ const chaptersDownloadSection = ref<Chapter[]>([]);
 const showDownloadModal = ref<boolean>(false);
 const downloadChapters = ref<number[]>([]);
 
-const data = (async () => {
-  const [comic, commentsData]: [ComicDetail, ComicComments] = await Promise.all(
-    [
-      useFetchData(`/comics/${comicId}`),
-      useFetchData(`/comics/${comicId}/comments`),
-    ]
-  );
-  isEnd.value = commentsData?.total_pages === commentsData?.current_page;
-  comments.value = commentsData?.comments;
-  return {
-    comic,
-    commentsData,
-  };
-})();
-
-const { comic } = await data;
+const comic: ComicDetail = await useFetchData(`/comics/${comicId}`);
 
 if (!comic) {
   throw createError({ statusCode: 404, statusMessage: 'Page Not Found' });
@@ -89,22 +70,6 @@ const onChangeChapterDownloadGroup = (idx: number) => {
     idx === 0 ? 0 : idx * CHAPTER_PER_PAGE + 1,
     (idx + 1) * CHAPTER_PER_PAGE
   );
-};
-
-const getComments = async () => {
-  try {
-    isFetching.value = true;
-    commentPage.value += 1;
-    const data = await useFetchData(
-      `/comics/${comicId}/comments?page=${commentPage.value}`
-    );
-    comments.value = [...comments.value, ...data.comments];
-    if (commentPage.value >= data.total_pages) isEnd.value = true;
-  } catch (err) {
-    console.log(err);
-  } finally {
-    isFetching.value = false;
-  }
 };
 
 const onAddDownloadChapter = (chapterId: number) => {
@@ -185,12 +150,6 @@ useServerSeoMeta(
           >
             End
           </span>
-          <span
-            v-if="comic.is_adult"
-            class="bg-rose-500 py-0.5 px-2 rounded-b-sm first:rounded-bl-none"
-          >
-            18+
-          </span>
         </div>
       </div>
       <div class="sm:col-span-3">
@@ -229,12 +188,9 @@ useServerSeoMeta(
             </span>
           </template>
           <template v-else>
-            <NuxtLink
-              :to="`/search?q=${comic.authors.replace(/\s+/g, '+')}`"
-              class="text-fuchsia-500"
-            >
+            <h5 class="text-fuchsia-500">
               {{ comic.authors }}
-            </NuxtLink>
+            </h5>
           </template>
         </div>
         <div
@@ -256,15 +212,6 @@ useServerSeoMeta(
             </template>
             <template v-else>
               {{ comic.followers.toLocaleString() }}
-            </template>
-          </span>
-          <span class="flex items-center gap-1">
-            <Icon name="ph:star-fill" size="20" class="text-yellow-400" />
-            <template v-if="comic.total_views === 'Updating'">
-              Updating
-            </template>
-            <template v-else>
-              {{ comic.average * 2 }}
             </template>
           </span>
         </div>
@@ -320,88 +267,57 @@ useServerSeoMeta(
     </div>
     <div class="max-w-5xl mx-auto mt-5">
       <div
-        class="flex items-center gap-6 font-bold text-lg sm:text-xl border-b-2 py-1"
+        class="flex items-center gap-1 text-emerald-500 font-bold text-lg sm:text-xl border-b-2 py-1"
+      >
+        <Icon name="bytesize:book" size="20" />
+        Chapters
+      </div>
+      <h4
+        class="mt-6 text-center text-2xl font-bold text-gray-700 select-none"
+        v-if="!comic.chapters.length"
+      >
+        No Chapter
+      </h4>
+      <div
+        v-else
+        class="flex items-center gap-3 my-5 text-gray-800 font-semibold text-sm flex-wrap"
       >
         <button
-          :class="`flex items-center gap-1 ${
-            currentTab === 'chapters' ? 'text-emerald-500' : ''
+          v-for="(_, idx) in new Array(totalChapterPage)"
+          :class="`px-2 py-0.5 rounded-full ${
+            idx === currentChapterPage
+              ? 'bg-emerald-100 text-emerald-500'
+              : 'bg-gray-100'
           }`"
-          @click="currentTab = 'chapters'"
+          @click="onChangeChapterGroup(idx)"
         >
-          <Icon name="bytesize:book" size="20" />
-          Chapters
+          <template v-if="idx + 1 < totalChapterPage">
+            {{
+              `${idx === 0 ? 0 : idx * CHAPTER_PER_PAGE + 1} - ${
+                (idx + 1) * CHAPTER_PER_PAGE
+              }`
+            }}
+          </template>
+          <template v-else>
+            {{
+              `${
+                totalChapterPage === 1 ? 0 : idx * CHAPTER_PER_PAGE + 1
+              } - ${newestChapter}`
+            }}
+          </template>
         </button>
-        <button
-          :class="`flex items-center gap-1 ${
-            currentTab === 'comments' ? 'text-emerald-500' : ''
-          }`"
-          @click="currentTab = 'comments'"
-        >
-          <Icon name="mingcute:comment-fill" size="20" />
-          Comments
-        </button>
       </div>
-      <div v-show="currentTab === 'chapters'">
-        <h4
-          class="mt-6 text-center text-2xl font-bold text-gray-700 select-none"
-          v-if="!comic.chapters.length"
+      <ul class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <NuxtLink
+          v-for="chapter in chaptersSection"
+          class="border rounded px-3 py-2 truncate hover:bg-emerald-50 duration-100"
+          :to="`/comic/${comic.id}/${chapter.id}`"
         >
-          No Chapter
-        </h4>
-        <div
-          v-else
-          class="flex items-center gap-3 my-5 text-gray-800 font-semibold text-sm flex-wrap"
-        >
-          <button
-            v-for="(_, idx) in new Array(totalChapterPage)"
-            :class="`px-2 py-0.5 rounded-full ${
-              idx === currentChapterPage
-                ? 'bg-emerald-100 text-emerald-500'
-                : 'bg-gray-100'
-            }`"
-            @click="onChangeChapterGroup(idx)"
-          >
-            <template v-if="idx + 1 < totalChapterPage">
-              {{
-                `${idx === 0 ? 0 : idx * CHAPTER_PER_PAGE + 1} - ${
-                  (idx + 1) * CHAPTER_PER_PAGE
-                }`
-              }}
-            </template>
-            <template v-else>
-              {{
-                `${
-                  totalChapterPage === 1 ? 0 : idx * CHAPTER_PER_PAGE + 1
-                } - ${newestChapter}`
-              }}
-            </template>
-          </button>
-        </div>
-        <ul class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <NuxtLink
-            v-for="chapter in chaptersSection"
-            class="border rounded px-3 py-2 truncate hover:bg-emerald-50 duration-100"
-            :to="`/comic/${comic.id}/${chapter.id}`"
-          >
-            <abbr :title="chapter.name" class="no-underline">
-              {{ chapter.name }}
-            </abbr>
-          </NuxtLink>
-        </ul>
-      </div>
-      <div v-show="currentTab === 'comments'">
-        <Comments :comments="comments" :is-end="isEnd" />
-        <div class="w-max mx-auto mt-4" v-show="!isEnd">
-          <Icon name="line-md:loading-loop" size="42" v-if="isFetching" />
-          <button
-            v-else
-            class="bg-emerald-100 text-emerald-500 font-medium rounded-full px-4 py-1.5"
-            @click="getComments"
-          >
-            Load more
-          </button>
-        </div>
-      </div>
+          <abbr :title="chapter.name" class="no-underline">
+            {{ chapter.name }}
+          </abbr>
+        </NuxtLink>
+      </ul>
     </div>
   </div>
   <!-- Download -->

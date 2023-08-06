@@ -1,21 +1,17 @@
 <script lang="ts" setup>
-import { ComicDetail, Comment } from '@/types';
+import { ComicDetail } from '@/types';
 import { historyAddComic } from '@/utils/localDb';
 
 const currentPage = ref<number>(1);
 const inputRangeVal = ref<number>(1);
-const commentPage = ref<number>(0);
 
 const firstRender = ref<boolean>(true);
 
 const openEpisode = ref<boolean>(false);
 const showToolbar = ref<boolean>(true);
-const openComments = ref<boolean>(false);
 const isFetching = ref<boolean>(false);
 const isEnd = ref<boolean>(false);
 const isChangingEpisode = ref<boolean>(false);
-
-const comments = ref<Comment[]>([]);
 
 const route = useRoute();
 const { chapterId, comicId } = route.params;
@@ -27,25 +23,6 @@ const { images, chapters, comic_name, chapter_name } = await useFetchData(
 if (images.length === 0 && comic_name === 'Thể loại') {
   throw createError({ statusCode: 404, statusMessage: 'Page Not Found' });
 }
-
-const getComments = async () => {
-  try {
-    isFetching.value = true;
-    commentPage.value += 1;
-    const data = await useFetchData(
-      `/comics/${comicId}/comments?chapter=${
-        chapters.length === 1 ? -1 : chapterId
-      }&page=${commentPage.value}`
-    );
-    comments.value = [...comments.value, ...data.comments];
-    if (commentPage.value >= data.total_pages) isEnd.value = true;
-    return data.total_comments;
-  } catch (err) {
-    console.log(err);
-  } finally {
-    isFetching.value = false;
-  }
-};
 
 const handleChangeEpisode = (type: 'prev' | 'next') => {
   isChangingEpisode.value = true;
@@ -61,11 +38,6 @@ const handleShowToolbar = (e: Event) => {
   if (e.target !== e.currentTarget) return;
   showToolbar.value = !showToolbar.value;
   openEpisode.value = false;
-};
-
-const onCloseComments = (e: Event) => {
-  if (e.target !== e.currentTarget) return;
-  openComments.value = false;
 };
 
 const onOpenEpisodes = () => {
@@ -114,16 +86,12 @@ const getElementsPos = () => {
   currentPage.value = elements.length;
 };
 
-const totalComments = await getComments();
-
 onMounted(async () => {
   document.addEventListener('scroll', getElementsPos);
   const comic: ComicDetail = await useFetchData(`/comics/${comicId}`);
-  const { authors, id, status, title, thumbnail, is_adult } = comic;
+  const { id, status, title, thumbnail } = comic;
   historyAddComic({
-    authors,
     id,
-    is_adult,
     status,
     title,
     thumbnail,
@@ -133,10 +101,6 @@ onMounted(async () => {
   });
 });
 onBeforeUnmount(() => document.removeEventListener('scroll', getElementsPos));
-
-watch(openComments, (status) => {
-  document.body.style.overflow = status ? 'hidden' : 'auto';
-});
 
 useSeoMeta(
   meta({
@@ -168,45 +132,10 @@ useServerSeoMeta(
         :alt="`Page ${image.page}`"
         loading="lazy"
         :id="image.page"
-        class="image-source w-full"
+        class="image-source w-full select-none"
       />
     </div>
     <div class="fixed inset-0" @click="handleShowToolbar">
-      <div
-        :class="`absolute inset-0 z-10 bg-[rgba(0,0,0,0.9)] flex items-center justify-center duration-200 ${
-          openComments
-            ? 'opacity-1 pointer-events-auto'
-            : 'opacity-0 pointer-events-none'
-        }`"
-        @click="onCloseComments"
-      >
-        <div
-          :class="`relative w-[90vw] max-w-4xl bg-white rounded-md duration-300 ${
-            openComments ? 'scale-100' : 'scale-0'
-          }`"
-        >
-          <Icon
-            name="icon-park:close-small"
-            size="32"
-            class="cursor-pointer absolute top-3 right-3"
-            @click="openComments = false"
-          />
-          <div class="max-h-[75vh] overflow-auto p-4 sm:p-10 text-sm">
-            <h4 class="text-2xl font-extrabold text-zinc-600">Comments</h4>
-            <Comments :comments="comments" :is-end="isEnd" />
-            <div class="w-max mx-auto pb-2 mt-6" v-show="!isEnd">
-              <Icon name="line-md:loading-loop" size="42" v-if="isFetching" />
-              <button
-                v-else
-                class="bg-emerald-100 text-emerald-500 font-medium rounded-full px-4 py-1.5"
-                @click="getComments"
-              >
-                Load more
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
       <div
         :class="`select-none top-0 inset-x-0 bg-[rgba(0,0,0,0.9)] text-center py-3 px-2 text-gray-300 font-semibold duration-200 ${
           showToolbar
@@ -214,10 +143,10 @@ useServerSeoMeta(
             : '-translate-y-full opacity-0'
         }`"
       >
-        <NuxtLink :to="`/comic/${comicId as string}`">{{
-          comic_name
-        }}</NuxtLink>
-        <Icon name="icon-park-outline:right" size="16" class="mx-2" />
+        <NuxtLink :to="`/comic/${comicId as string}`">
+          {{ comic_name }}
+        </NuxtLink>
+        <Icon name="icon-park-outline:right" size="16" class="mx-2 mb-0.5" />
         <span>{{ chapter_name }}</span>
       </div>
       <div
@@ -294,27 +223,11 @@ useServerSeoMeta(
           </button>
         </div>
         <span class="border-b rotate-90 w-4 border-gray-400 hidden lg:inline" />
-        <div class="flex items-center gap-6">
-          <button class="flex items-center gap-2" @click="openComments = true">
-            <span class="relative">
-              <Icon
-                name="majesticons:comment-2-text-line"
-                size="24"
-                class="text-white"
-              />
-              <span
-                class="absolute -right-2 -top-2 text-xs bg-zinc-600 rounded text-gray-200 px-0.5"
-              >
-                {{ totalComments }}
-              </span>
-            </span>
-            Comments
-          </button>
-          <button class="flex items-center gap-2" @click="handleDownload">
-            <Icon name="octicon:download-16" size="24" class="text-white" />
-            Download
-          </button>
-        </div>
+
+        <button class="flex items-center gap-2" @click="handleDownload">
+          <Icon name="octicon:download-16" size="24" class="text-white" />
+          Download
+        </button>
       </div>
     </div>
   </main>

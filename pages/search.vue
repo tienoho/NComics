@@ -87,21 +87,9 @@ watch(route, async (route) => {
             <h3 class="text-lg text-black leading-5">
               {{ comic.title }}
               <span class="text-sm text-gray-500">
-                ({{ comic.lastest_chapters[0]?.name || 'Updating' }})
+                ({{ comic.last_chapter.name || 'Updating' }})
               </span>
             </h3>
-            <p class="flex items-center gap-1 text-emerald-500">
-              <template v-if="Array.isArray(comic.authors)">
-                {{ comic.authors.join(' | ') }}
-              </template>
-              <template v-else-if="comic.authors === 'Updating'">
-                <Icon name="mdi:dots-circle" size="16" />
-                Updating
-              </template>
-              <template v-else>
-                {{ comic.authors }}
-              </template>
-            </p>
             <p class="text-sm line-clamp-2 font-semibold">
               {{ comic.short_description }}
             </p>

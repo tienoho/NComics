@@ -9,13 +9,12 @@ const props = defineProps<{
 }>();
 const { comic, detail, isHistory = false } = props;
 const {
-  authors,
+  genres,
   followers,
   id,
   status,
   thumbnail,
   title,
-  total_comments,
   total_views,
   is_trending,
   updated_at,
@@ -99,42 +98,25 @@ const handleClickCard = (e: Event, type: 'detail' | 'delete' | 'continue') => {
         <hr class="mt-3 mb-0.5 border-gray-500" />
         <div>
           <p class="text-sm text-gray-300 truncate font-semibold">
-            <template v-if="Array.isArray(authors)">
-              {{ authors.join(' | ') }}
-            </template>
-            <template v-else-if="authors === 'Updating'">
-              <span class="flex items-center gap-1">
-                <Icon
-                  name="mdi:dots-circle"
-                  size="16"
-                  class="text-emerald-500"
-                />
-                Updating
-              </span>
-            </template>
-            <template v-else>{{ authors }} </template>
+            {{ genres.map((g) => g.name).join(' | ') }}
           </p>
           <div
-            class="hidden md:flex items-center gap-0.5 justify-center gap-x-2 gap-y-1 text-emerald-400 text-xs py-1 mt-0.5"
+            class="flex items-center gap-0.5 justify-center gap-x-2 gap-y-1 text-emerald-400 text-xs py-1 mt-0.5"
             v-if="!isHistory"
           >
             <span class="flex items-center gap-1 bg-white/25 px-1 rounded">
               <Icon name="carbon:view-filled" />
-              {{ total_views }}
+              {{
+                Intl.NumberFormat('en', { notation: 'compact' }).format(
+                  total_views
+                )
+              }}
             </span>
             <span class="flex items-center gap-1 bg-white/25 px-1 rounded">
               <Icon name="ant-design:heart-outlined" />
               {{
                 Intl.NumberFormat('en', { notation: 'compact' }).format(
-                  +followers.replace(/,/g, '')
-                )
-              }}
-            </span>
-            <span class="flex items-center gap-1 bg-white/25 px-1 rounded">
-              <Icon name="mingcute:comment-fill" />
-              {{
-                Intl.NumberFormat('en', { notation: 'compact' }).format(
-                  +total_comments.replace(/,/g, '')
+                  followers
                 )
               }}
             </span>
