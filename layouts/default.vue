@@ -29,7 +29,8 @@ watch(route, (route) => {
   <div
     :class="`fixed z-50 inset-0 bg-white flex items-center justify-center duration-300 ${
       isLoading
-        ? 'opacity-1  pointer-events-auto'
+        //? 'opacity-1  pointer-events-auto'
+        ? 'opacity-0  pointer-events-none' // fix tạm thời,  chạy trên domain bị treo màn hình bắt đầu
         : 'opacity-0  pointer-events-none'
     }`"
   >
