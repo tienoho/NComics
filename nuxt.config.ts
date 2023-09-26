@@ -1,7 +1,9 @@
 export default defineNuxtConfig({
   ssr: true,
   nitro: {
-    prerender: true
+    prerender: {
+      crawlLinks: true,
+    },
   },
   modules: [
     '@nuxtjs/tailwindcss',
