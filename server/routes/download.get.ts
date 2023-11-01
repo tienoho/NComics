@@ -28,16 +28,28 @@ export default defineEventHandler(async (event) => {
   doc.on('data', (chunk) => stream.write(chunk));
   doc.on('end', () => stream.end());
 
-  for (const { src } of images) {
-    const data: any = await $fetch(src, {
+  const promises = images.map((image: any) => {
+    return $fetch(image.src, {
       responseType: 'arrayBuffer',
-    });
+    })
+      .then((data) => data)
+      .catch(() => {
+        return $fetch(image.backup_src, {
+          responseType: 'arrayBuffer',
+        })
+          .then((data) => data)
+          .catch(() => {});
+      });
+  });
 
-    // @ts-ignore
-    const img = doc.openImage(data);
+  const imagesResponse = await Promise.all(promises);
+  imagesResponse.forEach((imageData) => {
+    if (!imageData) return;
+    //@ts-ignore
+    const img = doc.openImage(imageData);
     doc.addPage({ size: [img.width, img.height] });
     doc.image(img, 0, 0);
-  }
+  });
 
   doc.end();
 
