@@ -9,8 +9,6 @@ const firstRender = ref<boolean>(true);
 
 const openEpisode = ref<boolean>(false);
 const showToolbar = ref<boolean>(true);
-const isFetching = ref<boolean>(false);
-const isEnd = ref<boolean>(false);
 const isChangingEpisode = ref<boolean>(false);
 
 const route = useRoute();
@@ -117,23 +115,29 @@ useServerSeoMeta(
 <template>
   <main class="bg-zinc-900 min-h-screen">
     <div class="flex flex-col max-w-2xl mx-auto">
-      <span
-        v-if="isChangingEpisode"
-        v-for="(_, idx) in new Array(5)"
-        :key="idx"
-        class="aspect-[2/3] bg-zinc-700 animate-pulse"
-      >
-      </span>
-      <img
-        v-else
-        v-for="image in images"
-        :key="image.src"
-        :src="image.src"
-        :alt="`Page ${image.page}`"
-        loading="lazy"
-        :id="image.page"
-        class="image-source w-full select-none"
-      />
+      <ClientOnly>
+        <span
+          v-if="isChangingEpisode"
+          v-for="(_, idx) in new Array(5)"
+          :key="idx"
+          class="aspect-[2/3] bg-zinc-700 animate-pulse"
+        >
+        </span>
+        <img
+          v-else
+          v-for="image in images"
+          :key="image.src"
+          :src="image.src"
+          :alt="`Page ${image.page}`"
+          loading="lazy"
+          :id="image.page"
+          class="image-source w-full select-none"
+          @error="
+            // @ts-ignore
+            $event.target.src = image.backup_src
+          "
+        />
+      </ClientOnly>
     </div>
     <div class="fixed inset-0" @click="handleShowToolbar">
       <div
