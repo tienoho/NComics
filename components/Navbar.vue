@@ -119,6 +119,10 @@ onBeforeUnmount(() => {
                 :src="comic.thumbnail"
                 :alt="comic.title"
                 class="border border-emerald-500 w-16 h-24 object-cover object-center rounded"
+                @error="
+                  //@ts-ignore
+                  $event.target.src = '/icon.png'
+                "
               />
               <div>
                 <h6 class="font-bold text-sm">

@@ -24,6 +24,7 @@ const {
 
 const isImageLoaded = ref<boolean>(false);
 const emit = defineEmits(['delete-comic']);
+const { baseURL } = useRuntimeConfig().public;
 
 const handleClickCard = (e: Event, type: 'detail' | 'delete' | 'continue') => {
   e.stopPropagation();
@@ -70,22 +71,16 @@ const handleClickCard = (e: Event, type: 'detail' | 'delete' | 'continue') => {
         Up
       </span>
     </div>
-    <div class="relative">
-      <div
-        :class="`absolute inset-0 flex items-center justify-center text-white bg-gray-200 duration-150 ${
-          isImageLoaded ? 'opacity-0' : 'opacity-100'
-        }`"
-      >
-        <Icon name="line-md:loading-loop" size="48" />
-      </div>
-      <img
-        :src="thumbnail"
-        :alt="title"
-        class="w-full aspect-[2/3] object-cover object-center scale-[1.01] group-hover:scale-105 duration-300 origin-bottom select-none"
-        loading="lazy"
-        @load="isImageLoaded = true"
-      />
-    </div>
+    <img
+      :src="thumbnail"
+      :alt="title"
+      class="w-full aspect-[2/3] object-cover object-center scale-[1.01] group-hover:scale-105 duration-300 origin-bottom select-none"
+      loading="lazy"
+      @error="
+        // @ts-ignore
+        $event.target.src = '/icon.png'
+      "
+    />
     <div
       class="absolute top-1/2 bottom-0 inset-x-0 flex flex-col justify-end px-2 sm:px-4 py-2 bg-gradient-to-b from-transparent to-black"
     >

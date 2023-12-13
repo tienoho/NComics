@@ -15,9 +15,7 @@ const chaptersSection = ref<Chapter[]>([]);
 const description = ref<any>(null);
 
 const currentChapterPage = ref<number>(0);
-const isEnd = ref<boolean>(false);
 
-const isFetching = ref<boolean>(false);
 const isTooLongDescription = ref<boolean>(false);
 const showFullDescription = ref<boolean>(false);
 
@@ -35,7 +33,7 @@ if (!comic) {
 
 const newestChapter = comic.chapters[0]?.name.match(/\d+(\.\d+)?/)?.[0];
 const totalChapterPage = !isNaN(Number(newestChapter))
-  ? Math.ceil(Number(newestChapter) / CHAPTER_PER_PAGE)
+  ? Math.ceil(Math.floor(Number(newestChapter)) / CHAPTER_PER_PAGE)
   : 0;
 
 const getChapter = (start: number, end: number) => {
@@ -46,8 +44,9 @@ const getChapter = (start: number, end: number) => {
     .filter((chapter) => {
       const chap = chapter.name.match(/\d+(\.\d+)?/)?.[0];
       if (!chap) return false;
-      if (parseFloat(chap) >= start && parseFloat(chap) <= end + 0.99)
+      if (parseFloat(chap) >= start && parseFloat(chap) <= end) {
         return true;
+      }
       return false;
     });
   return chapters;
@@ -60,7 +59,7 @@ const onChangeChapterGroup = (idx: number) => {
   currentChapterPage.value = idx;
   chaptersSection.value = getChapter(
     idx === 0 ? 0 : idx * CHAPTER_PER_PAGE + 1,
-    (idx + 1) * CHAPTER_PER_PAGE
+    (idx + 1) * CHAPTER_PER_PAGE + 0.99
   );
 };
 
@@ -135,12 +134,18 @@ useServerSeoMeta(
       <div
         class="aspect-[2/3] w-56 mx-auto sm:w-full rounded-lg border-2 overflow-hidden border-emerald-500 relative sm:col-span-1"
       >
-        <img
-          class="w-full h-full object-cover"
-          :src="comic.thumbnail"
-          :alt="comic.title"
-          draggable="false"
-        />
+        <ClientOnly>
+          <img
+            class="w-full h-full object-cover"
+            :src="comic.thumbnail"
+            :alt="comic.title"
+            draggable="false"
+            @error="
+              // @ts-ignore
+              $event.target.src = '/icon.png'
+            "
+          />
+        </ClientOnly>
         <div
           class="flex gap-1 absolute font-bold top-0 inset-x-0 z-10 text-xs text-white"
         >
